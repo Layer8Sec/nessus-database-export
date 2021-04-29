@@ -3,22 +3,21 @@
 -- Get all scan results for most recent scans in folder_id 100 by running CALL get_folder_results(100, NULL, 0)
 -- If you want to filter out a specific existences of a specific vulnerability you can use the second parameter to specify a plugin_id CALL get_folder_results(100, 10287, 0)
 
-DROP PROCEDURE IF EXISTS get_folder_results;
 
+DROP PROCEDURE IF EXISTS REMPLAZAR.get_folder_results;
 DELIMITER //
-CREATE PROCEDURE get_folder_results
-(IN fid INT, IN pid INT, IN offset INT)
-
+CREATE PROCEDURE REMPLAZAR.get_folder_results
+(IN fid INT)
 BEGIN
     DECLARE cur_done BOOLEAN DEFAULT FALSE;
     DECLARE cur_scan_id INT;
     
     DECLARE cur_list CURSOR FOR 
-        SELECT scan_id FROM nessusdb.scan 
-		WHERE folder_id = fid;
+    SELECT scan_id FROM REMPLAZAR.scan
+      WHERE folder_id = fid;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET cur_done = TRUE;
-    DROP TEMPORARY TABLE IF EXISTS temp_table;
-    CREATE TEMPORARY TABLE temp_table
+    DROP TABLE IF EXISTS temp_table;
+    CREATE TABLE temp_table
     (
         host_vuln_id INT(11),
         plugin_id INT(11), 
@@ -68,21 +67,16 @@ BEGIN
             NATURAL JOIN plugin 
             NATURAL JOIN vuln_output 
             WHERE scan_run_id = 
-            (SELECT scan_run_id FROM nessusdb.scan_run 
-            NATURAL JOIN nessusdb.scan 
-            WHERE nessusdb.scan_run.scan_id = cur_scan_id 
+            (SELECT scan_run_id FROM REMPLAZAR.scan_run 
+            NATURAL JOIN REMPLAZAR.scan 
+            WHERE REMPLAZAR.scan_run.scan_id = cur_scan_id 
             ORDER BY scan_start DESC
             LIMIT 1
-            OFFSET offset);
+            );
 
             END LOOP loop_list;
     CLOSE cur_list;
 
-    IF pid IS NULL THEN
-        SELECT * FROM temp_table;
-    ELSE 
-        SELECT * FROM temp_table WHERE plugin_id = pid;
-    END IF;
 
 END //
 DELIMITER ;
